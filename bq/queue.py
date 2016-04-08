@@ -3,26 +3,34 @@ import os, sys, subprocess, time, traceback, random, tempfile
 from glob import glob
 
 from bl.dict import Dict
-from bl.text import Text
+from bl.log import Log
+from bf.text import Text
 
-"""This queue library implements a simple file-based queue 
-that is processed at set intervals by the queue process. 
-JSON is the default queue entry data extension, processed according to the specs of the subclass.
-Queue entry data is passed to the process_entry() method as bytes.
-If there is one queue process, it is a synchronous queue -- entries are processed FIFO.
-If there are multiple queue processes, it is asynchronous -- each process is synchronous, 
-but there is no synchronization between the processes; each process picks up the next entry.
+"""This queue library implements a simple file-based queue that is processed at 
+set intervals by the queue process. JSON is the default queue entry data extension, 
+processed according to the specs of the subclass. Queue entry data is passed to 
+the process_entry() method as bytes. If there is one queue process, it is a 
+synchronous queue -- entries are processed FIFO. If there are multiple queue 
+processes, it is asynchronous -- each process is synchronous, but there is no 
+synchronization between the processes; each process picks up the next entry.
 """
 
-class FileQueue(Dict):
+class Queue(Dict):
 
-    def __init__(self, path, ingpath=None, outpath=None, log=print, debug=False, **args):
-        if not os.path.exists(path): os.makedirs(path)
+    def __init__(self, path, ingpath=None, outpath=None, log=Log(), **args):
+        """
+        path [REQ'D]    = the filesystem path to the queue directory. Created if it doesn't exist.
+        ingpath         = the 'processing' directory, defaults to path+"/ING".
+        outpath         = the 'finished' directory, defaults to path+"/OUT".
+        log             = the bl.log object used for logging; defaults to Log(), which prints.
+        **args          = any other arguments you want to define for your queue class.
+        """
+        if not os.path.exists(path): os.makedirs(path)*
         if ingpath is None: ingpath = path + '/ING'
         if not os.path.exists(ingpath): os.makedirs(ingpath)
         if outpath is None: outpath = path + '/OUT'
         if not os.path.exists(outpath): os.makedirs(outpath)
-        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, log=log, debug=debug, **args)
+        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, log=log, **args)
         self.log("[%s] init %r" % (self.timestamp(), self.__class__))
 
     def __repr__(self):
@@ -39,10 +47,10 @@ class FileQueue(Dict):
 
     def insert(self, text, prefix="", suffix="", ext='.json'):
         """insert the given queue entry into the queue.
-        text    : the text of the queue entry (REQUIRED)
-        prefix  : a prefix for each queue entry filename (default '')
-        suffix  : a suffix for each queue entry filename (before extension, default '')
-        ext     : the extension of the queue entry filename (default '.json') 
+        text    = the text of the queue entry (REQUIRED)
+        prefix  = a prefix for each queue entry filename (default '')
+        suffix  = a suffix for each queue entry filename (before extension, default '')
+        ext     = the extension of the queue entry filename (default '.json') 
         """
         qfn = os.path.join(self.path, "%s%s-%.5f%s%s" 
             % (prefix, time.strftime("%Y%m%d.%H%M%S"), random.random(), suffix, ext))
@@ -73,7 +81,6 @@ class FileQueue(Dict):
                 infn = os.path.join(self.ingpath, os.path.basename(fn))
                 os.rename(fn, infn)
             except:
-                self.log(sys.exc_info()[1])
                 continue
 
             # process this entry
@@ -93,9 +100,8 @@ class FileQueue(Dict):
     def handle_exception(self, fn=None):
         """Handle exceptions that occur during queue script execution.
         (Override this method to implement your own exception handling.)
-        fn          : the filename of the queue entry.
-        exception   : the exception object
+        fn          = the filename of the queue entry.
+        exception   = the exception object
         """
         self.log("== EXCEPTION:", fn)
         self.log(traceback.format_exc())
-
