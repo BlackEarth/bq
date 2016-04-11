@@ -25,7 +25,7 @@ class Queue(Dict):
         log             = the bl.log object used for logging; defaults to Log(), which prints.
         **args          = any other arguments you want to define for your queue class.
         """
-        if not os.path.exists(path): os.makedirs(path)*
+        if not os.path.exists(path): os.makedirs(path)
         if ingpath is None: ingpath = path + '/ING'
         if not os.path.exists(ingpath): os.makedirs(ingpath)
         if outpath is None: outpath = path + '/OUT'
