@@ -17,12 +17,12 @@ synchronization between the processes; each process picks up the next entry.
 
 class Queue(Dict):
 
-    def __init__(self, path, ingpath=None, outpath=None, log=Log(), **args):
+    def __init__(self, path, ingpath=None, outpath=None, log=None, **args):
         """
         path [REQ'D]    = the filesystem path to the queue directory. Created if it doesn't exist.
         ingpath         = the 'processing' directory, defaults to path+"/ING".
         outpath         = the 'finished' directory, defaults to path+"/OUT".
-        log             = the bl.log object used for logging; defaults to Log(), which prints.
+        log             = the Log object used for logging; defaults to bl.log.Log(fn=path+'.log')
         **args          = any other arguments you want to define for your queue class.
         """
         if not os.path.exists(path): os.makedirs(path)
@@ -30,6 +30,7 @@ class Queue(Dict):
         if not os.path.exists(ingpath): os.makedirs(ingpath)
         if outpath is None: outpath = path + '/OUT'
         if not os.path.exists(outpath): os.makedirs(outpath)
+        if log is None: log = Log(fn=path+'.log')
         Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, log=log, **args)
         self.log("[%s] init %r" % (self.timestamp(), self.__class__))
 
