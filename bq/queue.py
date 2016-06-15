@@ -34,7 +34,7 @@ class Queue(Dict):
         if errpath is None: errpath = path + '/ERR'
         if not os.path.exists(errpath): os.makedirs(errpath)
         if log is None: log = Log(fn=path+'.log')
-        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, log=log, **args)
+        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, errpath=errpath, log=log, **args)
         self.log("[%s] init %r" % (self.timestamp(), self.__class__))
 
     def __repr__(self):
