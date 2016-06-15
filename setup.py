@@ -1,7 +1,7 @@
 
 config = {
   "name": "bq",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Queue library",
   "url": "https://github.com/BlackEarth/bq",
   "author": "Sean Harrison",
