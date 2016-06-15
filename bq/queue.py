@@ -17,11 +17,12 @@ synchronization between the processes; each process picks up the next entry.
 
 class Queue(Dict):
 
-    def __init__(self, path, ingpath=None, outpath=None, log=None, **args):
+    def __init__(self, path, ingpath=None, outpath=None, errpath=None, log=None, **args):
         """
         path [REQ'D]    = the filesystem path to the queue directory. Created if it doesn't exist.
         ingpath         = the 'processing' directory, defaults to path+"/ING".
         outpath         = the 'finished' directory, defaults to path+"/OUT".
+        errpath         = the 'error' directory, defaults to path+'/ERR'.
         log             = the Log object used for logging; defaults to bl.log.Log(fn=path+'.log')
         **args          = any other arguments you want to define for your queue class.
         """
@@ -30,6 +31,8 @@ class Queue(Dict):
         if not os.path.exists(ingpath): os.makedirs(ingpath)
         if outpath is None: outpath = path + '/OUT'
         if not os.path.exists(outpath): os.makedirs(outpath)
+        if errpath is None: errpath = path + '/ERR'
+        if not os.path.exists(errpath): os.makedirs(errpath)
         if log is None: log = Log(fn=path+'.log')
         Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, log=log, **args)
         self.log("[%s] init %r" % (self.timestamp(), self.__class__))
@@ -42,6 +45,7 @@ class Queue(Dict):
 
     def listen(self, sleep=5):
         """listen to the queue directory, with a wait time in seconds between processing"""
+        self.log('%s listening.' % self.__class__.__name__)
         while True:
             self.process_queue()
             time.sleep(sleep)
@@ -79,18 +83,19 @@ class Queue(Dict):
 
             # ensure that another queue process has not and will not process this entry.
             try:
-                infn = os.path.join(self.ingpath, os.path.basename(fn))
-                os.rename(fn, infn)
+                ingfn = os.path.join(self.ingpath, os.path.basename(fn))
+                os.rename(fn, ingfn)
             except:
+                # assume that this queue entry has already been taken
                 continue
 
             # process this entry
             try:
-                self.process_entry(infn)
+                self.process_entry(ingfn)
                 outfn = os.path.join(self.outpath, os.path.basename(fn))
-                os.rename(infn, outfn)
+                os.rename(ingfn, outfn)
             except:
-                self.handle_exception(fn=fn)
+                self.handle_exception(fn=ingfn)
 
     def process_entry(self, fn):
         """override this method to define how your subclass queue processes entries.
@@ -98,11 +103,16 @@ class Queue(Dict):
         """
         self.log("process_entry():", fn)
 
-    def handle_exception(self, fn=None):
+    def handle_exception(self, fn=None, **args):
         """Handle exceptions that occur during queue script execution.
         (Override this method to implement your own exception handling.)
         fn          = the filename of the queue entry.
         exception   = the exception object
         """
-        self.log("== EXCEPTION:", fn)
+        if len(args.keys()) > 0: 
+            self.log("== EXCEPTION:", fn, args)
+        else:
+            self.log("== EXCEPTION:", fn)
         self.log(traceback.format_exc())
+        if fn is not None and os.path.exists(fn):
+            os.rename(fn, os.path.join(self.errpath, os.path.basename(fn)))
