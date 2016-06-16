@@ -50,7 +50,7 @@ class Queue(Dict):
             self.process_queue()
             time.sleep(sleep)
 
-    def insert(self, text, prefix="", suffix="", ext='.json'):
+    def insert(self, text, prefix="", suffix="", ext='.txt'):
         """insert the given queue entry into the queue.
         text    = the text of the queue entry (REQUIRED)
         prefix  = a prefix for each queue entry filename (default '')
