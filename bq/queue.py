@@ -1,10 +1,11 @@
 
-import os, sys, subprocess, time, traceback, random, tempfile
+import os, sys, subprocess, time, traceback, random, tempfile, logging
 from glob import glob
 
 from bl.dict import Dict
-from bl.log import Log
-from bf.text import Text
+from bl.text import Text
+
+LOG = logging.getLogger(__name__)
 
 """This queue library implements a simple file-based queue that is processed at 
 set intervals by the queue process. JSON is the default queue entry data extension, 
@@ -17,13 +18,12 @@ synchronization between the processes; each process picks up the next entry.
 
 class Queue(Dict):
 
-    def __init__(self, path, ingpath=None, outpath=None, errpath=None, log=None, **args):
+    def __init__(self, path, ingpath=None, outpath=None, errpath=None, **args):
         """
         path [REQ'D]    = the filesystem path to the queue directory. Created if it doesn't exist.
         ingpath         = the 'processing' directory, defaults to path+"/ING".
         outpath         = the 'finished' directory, defaults to path+"/OUT".
         errpath         = the 'error' directory, defaults to path+'/ERR'.
-        log             = the Log object used for logging; defaults to bl.log.Log(fn=path+'.log')
         **args          = any other arguments you want to define for your queue class.
         """
         if not os.path.exists(path): os.makedirs(path)
@@ -33,9 +33,7 @@ class Queue(Dict):
         if not os.path.exists(outpath): os.makedirs(outpath)
         if errpath is None: errpath = path + '/ERR'
         if not os.path.exists(errpath): os.makedirs(errpath)
-        if log is None: log = Log(fn=path+'.log')
-        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, errpath=errpath, log=log, **args)
-        self.log("[%s] init %r" % (self.timestamp(), self.__class__))
+        Dict.__init__(self, path=path, ingpath=ingpath, outpath=outpath, errpath=errpath, **args)
 
     def __repr__(self):
         return "%s(path='%s')" % (self.__class__.__name__, self.path)
@@ -45,7 +43,6 @@ class Queue(Dict):
 
     def listen(self, sleep=5):
         """listen to the queue directory, with a wait time in seconds between processing"""
-        self.log('%s listening.' % self.__class__.__name__)
         while True:
             self.process_queue()
             time.sleep(sleep)
@@ -79,8 +76,7 @@ class Queue(Dict):
         """
         fns = self.list()
         for fn in fns:
-            self.log("[%s] %s" % (self.timestamp(), fn))
-
+            
             # ensure that another queue process has not and will not process this entry.
             try:
                 ingfn = os.path.join(self.ingpath, os.path.basename(fn))
@@ -101,7 +97,6 @@ class Queue(Dict):
         """override this method to define how your subclass queue processes entries.
         fn      : the filename of the queue entry, which is probably in self.outpath
         """
-        self.log("process_entry():", fn)
 
     def handle_exception(self, fn=None, **args):
         """Handle exceptions that occur during queue script execution.
@@ -109,10 +104,7 @@ class Queue(Dict):
         fn          = the filename of the queue entry.
         exception   = the exception object
         """
-        if len(args.keys()) > 0: 
-            self.log("== EXCEPTION:", fn, args)
-        else:
-            self.log("== EXCEPTION:", fn)
-        self.log(traceback.format_exc())
+        LOG.error("== EXCEPTION: %f %r" % (fn, args))
+        LOG.error(traceback.format_exc())
         if fn is not None and os.path.exists(fn):
             os.rename(fn, os.path.join(self.errpath, os.path.basename(fn)))
