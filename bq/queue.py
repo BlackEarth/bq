@@ -104,7 +104,8 @@ class Queue(Dict):
         fn          = the filename of the queue entry.
         exception   = the exception object
         """
-        LOG.error("== EXCEPTION: %r %r" % (fn, args))
-        LOG.error(traceback.format_exc())
         if fn is not None and os.path.exists(fn):
-            os.rename(fn, os.path.join(self.errpath, os.path.basename(fn)))
+            errfn = os.path.join(self.errpath, os.path.basename(fn))
+            os.rename(fn, errfn)
+            LOG.error("== EXCEPTION: %r %r" % (errfn, args))
+            LOG.error(traceback.format_exc())
