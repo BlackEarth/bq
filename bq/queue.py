@@ -68,6 +68,12 @@ class Queue(Dict):
         l.sort()
         return l
 
+    def index(self, qfn):
+        """return the index of fn in the queue"""
+        qfns = self.list()
+        if qfn in qfns:
+            return qfns.index(qfn)
+
     def process_queue(self):
         """Loop through all the currently-available queue entry files, in order; 
         For each file, 
