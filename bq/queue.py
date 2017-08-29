@@ -47,13 +47,27 @@ class Queue(Dict):
             self.process_queue()
             time.sleep(sleep)
 
-    def insert(self, text, prefix="", suffix="", ext='.txt'):
+    def insert(self, text, prefix="", suffix="", ext='.txt', duplicate=False):
         """insert the given queue entry into the queue.
         text    = the text of the queue entry (REQUIRED)
         prefix  = a prefix for each queue entry filename (default '')
         suffix  = a suffix for each queue entry filename (before extension, default '')
         ext     = the extension of the queue entry filename (default '.json') 
         """
+        # only insert the entry if there is no other entry containing the same data
+        # -- no need to duplicate an existing entry.
+        if duplicate==False:
+            qfns = self.list()
+            for qfn in qfns:
+                try:
+                    with open(qfn, 'rb') as f:
+                        qft = f.read().decode('utf-8')
+                        if qftext == text:
+                            return qfn
+                except:
+                    # queue managed to get to the file before we read it -- no need to keep reading,
+                    # since they are processed in the same order by self.list()
+                    break
         qfn = os.path.join(self.path, "%s%s-%.5f%s%s" 
             % (prefix, time.strftime("%Y%m%d.%H%M%S"), random.random(), suffix, ext))
         qf = Text(fn=qfn, text=text)
@@ -62,11 +76,8 @@ class Queue(Dict):
 
     def list(self, pattern="*"):
         """get a list of files currently in the queue, sorted in order."""
-        l = [fn 
-            for fn in glob(os.path.join(self.path, pattern))
-            if not os.path.isdir(fn)]
-        l.sort()
-        return l
+        return sorted([fn for fn in glob(os.path.join(self.path, pattern))
+                if os.path.isfile(fn)])
 
     def index(self, qfn):
         """return the index of fn in the queue"""
