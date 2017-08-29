@@ -62,7 +62,7 @@ class Queue(Dict):
                 try:
                     with open(qfn, 'rb') as f:
                         qft = f.read().decode('utf-8')
-                        if qftext == text:
+                        if qft == text:
                             return qfn
                 except:
                     # queue managed to get to the file before we read it -- no need to keep reading,
