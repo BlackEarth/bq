@@ -1,0 +1,7 @@
+-e git+https://github.com/BlackEarth/bf.git@7380396afcdbbf0c93d9c737f16d5451aaed83a6#egg=bf
+-e git+https://github.com/BlackEarth/bl.git@2ef4586b72f07f27babcdc7a8150972fb47aa8d0#egg=bl
+cssselect==1.0.3
+cssutils==1.0.2
+libsass==0.14.2
+six==1.11.0
+Unum==4.1.4
