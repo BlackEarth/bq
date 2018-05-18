@@ -47,7 +47,7 @@ class Queue(Dict):
             self.process_queue()
             time.sleep(sleep)
 
-    def insert(self, text, prefix="", suffix="", ext='.txt', duplicate=False):
+    def insert(self, text=None, data=None, prefix="", suffix="", ext='.txt', duplicate=False):
         """insert the given queue entry into the queue.
         text    = the text of the queue entry (REQUIRED)
         prefix  = a prefix for each queue entry filename (default '')
@@ -70,7 +70,7 @@ class Queue(Dict):
                     break
         qfn = os.path.join(self.path, "%s%s-%.5f%s%s" 
             % (prefix, time.strftime("%Y%m%d.%H%M%S"), random.random(), suffix, ext))
-        qf = Text(fn=qfn, text=text)
+        qf = Text(fn=qfn, text=text, data=data)
         qf.write()
         return qfn
 
