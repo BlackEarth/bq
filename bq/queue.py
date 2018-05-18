@@ -3,6 +3,7 @@ import os, sys, subprocess, time, traceback, random, tempfile, logging
 from glob import glob
 
 from bl.dict import Dict
+from bl.file import File
 from bl.text import Text
 
 LOG = logging.getLogger(__name__)
@@ -70,7 +71,10 @@ class Queue(Dict):
                     break
         qfn = os.path.join(self.path, "%s%s-%.5f%s%s" 
             % (prefix, time.strftime("%Y%m%d.%H%M%S"), random.random(), suffix, ext))
-        qf = Text(fn=qfn, text=text, data=data)
+        if text is not None:
+            qf = Text(fn=qfn, text=text)
+        elif data is not None:
+            qf = File(fn=qfn, data=data)
         qf.write()
         return qfn
 
